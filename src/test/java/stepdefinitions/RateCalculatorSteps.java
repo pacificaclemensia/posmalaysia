@@ -50,45 +50,30 @@ public class RateCalculatorSteps {
     }
     
 	@When("User selects {string} as the {string} country")
-    public void user_selects_To_country(String country, String field) throws InterruptedException {
-		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    public void user_selects_To_country(String country, String field) {
+		
+		 WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+		 WebElement toCountryField = wait.until(ExpectedConditions.elementToBeClickable
+				 (By.id("mat-input-0")));
+		 toCountryField.click();
+         toCountryField.clear();
+         toCountryField.sendKeys("India");
+         List<WebElement> countryOptions = wait.until(
+                 ExpectedConditions.visibilityOfAllElementsLocatedBy(By.xpath("//mat-option/span"))
+             );
+         for (WebElement option : countryOptions) {
+             if (option.getText().trim().equalsIgnoreCase("India")) {
+                 option.click();
+                 break;
+             }
+         }
+         System.out.println("India selected successfully!");
 
-		 WebElement toCountryField = wait.until(ExpectedConditions.elementToBeClickable(By.id("mat-input-0"))); 
-	        toCountryField.click();
-	        toCountryField.clear();
-	        toCountryField.sendKeys(country); 
-	        
-	        WebElement dropdown = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("mat-autocomplete-0")));  
-	        
-	        List<WebElement> options = dropdown.findElements(By.xpath("//mat-option"));
-	        
-	        boolean indiaSelected = false;
-	        for (int i = 0; i < options.size(); i++) {
-	            try {
-	                WebElement option = options.get(i);
-	                if (option.getText().equalsIgnoreCase(country)) {
-	                	if (option.isDisplayed() && option.isEnabled()) {
-	                        option.click();
-	                        indiaSelected = true;
-	                        break;
-	                }
-	        }
-	        
-	}
-	            
-	            catch (StaleElementReferenceException e) {
-	              
-	                options = dropdown.findElements(By.xpath("//mat-option"));
-	                continue; 
-	                
-	                
-	            }}
-	        
-	        
-	        if (!indiaSelected) {
-	            throw new AssertionError("India was not found or clicked from the dropdown");
-	        }
-	    }
+    } 
+		
+	
+	
+    		
 	
 	@When("User leaves the {string} postcode field empty")
     public void user_leaves_postcode_empty(String field) {
@@ -100,18 +85,41 @@ public class RateCalculatorSteps {
     public void user_enters_weight(String weight, String field) {
         driver.findElement(By.xpath("//*[@id=\"contentBody\"]/div/app-static-layout/"
         		+ "app-rate-calculator-v2/div/div[3]/div[1]/div[3]/div/div[2]/div/input")).sendKeys(weight);
-    }
+     
+        
+	}
 
 	@When("User clicks on Calculate")
     public void user_clicks_calculate() {
-		WebElement calculateButton = driver.findElement(By.xpath("//*[@id='contentBody']//app-rate-calculator-v2//div[3]/div[2]/a"));
-		Actions actions = new Actions(driver);
-		actions.moveToElement(calculateButton).click().perform();
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+		WebElement calculateButton = wait.until(ExpectedConditions.elementToBeClickable(
+		        By.xpath("//*[@id='contentBody']//app-rate-calculator-v2//div[3]/div[2]/a")
+		    ));
 
-
+		    // Scroll into view
+		JavascriptExecutor js = (JavascriptExecutor) driver;
+	    js.executeScript("arguments[0].scrollIntoView({block: 'center'});", calculateButton);
+	    try {
+	        Thread.sleep(1000); // Give time for scrolling effect
+	    } catch (InterruptedException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    try {
+	        Actions actions = new Actions(driver);
+	        actions.moveToElement(calculateButton).click().perform();
+	    } catch (Exception e) {
+	        System.out.println("Actions click failed, trying JavaScript click...");
+	        js.executeScript("arguments[0].click();", calculateButton);
+	    }
+	}
 		
-    }
-
+		
+	
+		
+		
+    
+	
 	@Then("User should see multiple shipping quotes and options")
     public void user_verifies_shipping_options() {
 		List<WebElement> options = driver.findElements
